@@ -23,11 +23,16 @@ int main (int argc, char** argv) {
   hsize_t NX = N[0], NY = N[1];
   hsize_t Nlocal[2] = {NX/dim[0], NY/dim[1]};
   hsize_t offset[2] = {mpirank / dim[0], mpirank % dim[0]};
-  for(int i=0; i<2; i++) offset[i] *= Nlocal[i];
-  hsize_t count[2] = {1,1};
-  hsize_t stride[2] = {1,1};
+  //for(int i=0; i<2; i++) offset[i] *= Nlocal[i];
+  hsize_t count[2] = {2,2}; //{1,1};
+  hsize_t stride[2] = {Nlocal[0],Nlocal[1]}; //{1,1};
+
+  hsize_t block[2] = {Nlocal[0]/count[0], Nlocal[1]/count[1]};
+  /* Override offset to cater to the required layout */
+  for(int i=0; i<2; i++) offset[i] *= block[i];
+
   hid_t localspace = H5Screate_simple(2, Nlocal, NULL);
-  H5Sselect_hyperslab(globalspace, H5S_SELECT_SET, offset, stride, count, Nlocal);
+  H5Sselect_hyperslab(globalspace, H5S_SELECT_SET, offset, stride, count, /*Nlocal*/block);
   H5Pclose(plist);
   vector<int> buffer(Nlocal[0]*Nlocal[1]);
   plist = H5Pcreate(H5P_DATASET_XFER);
